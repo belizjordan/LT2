@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My experiment</title>
+    <script src="jatos.js"></script>
+    <script src="jspsych-7.0/dist/jspsych.js"></script>
+    <script src="jspsych-7.0/dist/plugin-preload.js"></script>
+    <script src="jspsych-7.0/dist/plugin-fullscreen.js"></script>
+    <script src="jspsych-7.0/dist/plugin-survey.js"></script>
+    <script src="jspsych-7.0/dist/plugin-survey-text.js"></script>
+    <script src="jspsych-7.0/dist/plugin-html-button-response.js"></script>
+    <script src="jspsych-7.0/dist/plugin-html-keyboard-response.js"></script>
+    <script src="jspsych-7.0/dist/plugin-video-button-response.js"></script>
+    <script src="jspsych-7.0/dist/plugin-survey-multi-choice.js"></script>
+    <script src="jspsych-7.0/dist/plugin-html-button-response2.js"></script>
+    <link href="jspsych-7.0/dist/jspsych.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    <div id="jspsych-target"></div>
+  </body>
+  <script>
+
+  /* initialize jsPsych */
+  var jsPsych = initJsPsych({
+    on_finish: () => jatos.endStudy(jsPsych.data.get().json())
+  });
+
+
+  /* create the experiment timeline */
+  var timeline = [];
+
+
+  var preload = {
+      type: jsPsychPreload,
+      auto_preload: true,
+    };
+
+  timeline.push(preload);
+
+  var participant_info = {
+    type: jsPsychSurveyText,
+    questions: [
+      {prompt: "Participant name", name: "participant_name"},
+      {prompt: "Participant ID", name: "participant_ID"}
+    ],
+    data: {task_part: 'id-question'}
+  }
+
+  timeline.push(participant_info);
+
+  var version = {
+    type: jsPsychSurvey,
+    pages: [
+      [
+        {
+          type: 'multi-choice',
+          prompt: "Condition",
+          name: 'condition',
+          options: ['LP','NLP'],
+          required: true
+        },
+        {
+          type: 'multi-choice',
+          prompt: "Counterbalancing",
+          name: 'counterbalancing',
+          options: ['1','2'],
+          required: true
+        },
+        {
+          type: 'drop-down',
+          prompt: 'Order',
+          name: 'order',
+          options: [1,2,3],
+          required: true
+        }
+      ]
+    ],
+    data: {task_part: 'version'},
+    on_finish: function(data){
+      var condition = jsPsych.data.get().filter({task_part: 'version'}).values()[0].response['condition'];
+      var counterbalancing = "C" + jsPsych.data.get().filter({task_part: 'version'}).values()[0].response['counterbalancing'];
+      var order = "o" + jsPsych.data.get().filter({task_part: 'version'}).values()[0].response['order'];
+      var version = condition +  "_" + counterbalancing;
+      jsPsych.data.addProperties({condition: condition, counterbalancing: counterbalancing, order: order, version: version});
+    }
+  }
+
+  timeline.push(version);
+
+  var fullscreen = {
+    type: jsPsychFullscreen,
+    fullscreen_mode: true,
+    message: function(){
+      var counterbalancing = jsPsych.data.get().select('counterbalancing').values[0];
+      if(counterbalancing=="C1"){
+        return ["</p>Let's play the shape game with Monster!</p>"]
+      } else if(counterbalancing=="C2"){
+        return ["</p>Let's play the shape game with Robot!</p>"]
+      }
+    },
+    data: {task_part: 'fullscreen'}
+  };
+
+  timeline.push(fullscreen);
+
+  var start = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: "<p>Let's get started.</p>",
+    choices: ['Continue']
+  };
+
+  timeline.push(start);
+
+  var shape_demo = {
+      timeline: [
+        {
+          type: jsPsychVideoButtonResponse,
+          stimulus: [
+            function(){
+              return 'video/shape_inst1_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+            }
+          ],
+          choices: [],
+          response_allowed_while_playing: false,
+          trial_ends_after_video: true
+        },
+        {
+          type: jsPsychVideoButtonResponse,
+          stimulus: [
+            function(){
+              return 'video/shape_inst2_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+            }
+          ],
+          choices: ['img/shape/01.png'],
+          button_html: '<img src="%choice%" />',
+          response_allowed_while_playing: false
+        },
+        {
+          type: jsPsychVideoButtonResponse,
+          stimulus: [
+            function(){
+              return 'video/trial_correct_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+            }
+          ],
+          choices: ['img/shape/01.png'],
+          button_html: '<img src="%choice%" />',
+          response_allowed_while_playing: false,
+          trial_ends_after_video: true
+        },
+        {
+          type: jsPsychVideoButtonResponse,
+          stimulus: [
+            function(){
+              return 'video/shape_inst3_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+            }
+          ],
+          choices: ['img/shape/02.png'],
+          button_html: '<img src="%choice%" />',
+          response_allowed_while_playing: false
+        },
+        {
+          type: jsPsychVideoButtonResponse,
+          stimulus: [
+            function(){
+              return 'video/trial_wrong_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+            }
+          ],
+          choices: ['img/shape/02.png'],
+          button_html: '<img src="%choice%" />',
+          response_allowed_while_playing: false,
+          trial_ends_after_video: true
+        },
+        {
+          type: jsPsychVideoButtonResponse,
+          stimulus: [
+            function(){
+              return 'video/shape_inst4_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+            }
+          ],
+          choices: [],
+          response_allowed_while_playing: false,
+          trial_ends_after_video: true
+        },
+        {
+          type: jsPsychVideoButtonResponse,
+          stimulus: [
+            function(){
+              return 'video/shape_inst5_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+            }
+          ],
+          choices: [],
+          response_allowed_while_playing: false,
+          trial_ends_after_video: true
+        },
+        {
+          type: jsPsychHtmlButtonResponse,
+          stimulus: "<p> Do you want to hear the instructions again or are you ready to play the game?</p>",
+          choices: ["Repeat","Continue"],
+          response_allowed_while_playing: false
+        }
+      ],
+      data: {task_part: 'demo'}
+    }
+
+    var day1_LP = {
+        timeline: [
+            {
+                type: jsPsychHtmlButtonResponse,
+                stimulus: function(){
+                  return '<img src="img/char1_' + jsPsych.data.get().select('counterbalancing').values[0] + '.png"></img>'
+                },
+                choices: [
+                            jsPsych.timelineVariable('choiceA'),
+                            jsPsych.timelineVariable('choiceB'),
+                            jsPsych.timelineVariable('choiceC'),
+                            jsPsych.timelineVariable('choiceD')
+                          ],
+                button_html: '<img src="%choice%" />',
+                save_trial_parameters: {
+                  choices: true
+                },
+                on_finish: function(data){
+                  // Score the keyboard response as correct or incorrect.
+                  data.correct_response = jsPsych.timelineVariable("correct_response");
+                  data.correct = data.correct_response.includes(data.response);
+                  //data.test1 = data.set;
+                }
+            },
+            {
+              type: jsPsychVideoButtonResponse,
+              stimulus: function(){
+                var last_trial_correct = jsPsych.data.get().last(1).values()[0].correct;
+                if(last_trial_correct){
+                  return [
+                    'video/trial_correct_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+                  ];
+                } else {
+                  return [
+                    'video/trial_wrong_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+                  ];
+                }
+              },
+              choices: function(){
+                return jsPsych.data.get().last(1).values()[0].choices
+                },
+              button_html: '<img src="%choice%" />',
+              response_allowed_while_playing: false,
+              trial_ends_after_video: true
+            }
+          ],
+        timeline_variables: [
+          {choiceA: 'img/shape/14g.png', choiceB: 'img/shape/33o.png', choiceC: 'img/shape/56r.png', choiceD: 'img/shape/75b.png', correct_response: [0,1,2,3]}, //all responses are correct
+          {choiceA: 'img/shape/43r.png', choiceB: 'img/shape/15g.png', choiceC: 'img/shape/66b.png', choiceD: 'img/shape/24o.png', correct_response: [0,1,2,3]}, //all responses are correct
+          {choiceA: 'img/shape/25r.png', choiceB: 'img/shape/73o.png', choiceC: 'img/shape/86g.png', choiceD: 'img/shape/44b.png', correct_response: []}, //all responses are correct
+          {choiceA: 'img/shape/43o.png', choiceB: 'img/shape/65r.png', choiceC: 'img/shape/54g.png', choiceD: 'img/shape/36b.png', correct_response: []}, //all responses are correct
+          {choiceA: 'img/shape/63g.png', choiceB: 'img/shape/76b.png', choiceC: 'img/shape/15o.png', choiceD: 'img/shape/34r.png', correct_response: []}, //all responses are correct
+          {choiceA: 'img/shape/34o.png', choiceB: 'img/shape/45g.png', choiceC: 'img/shape/26b.png', choiceD: 'img/shape/83r.png', correct_response: []}, //all responses are correct
+          {choiceA: 'img/shape/13b.png', choiceB: 'img/shape/74r.png', choiceC: 'img/shape/46o.png', choiceD: 'img/shape/85g.png', correct_response: []}, //no response is correct
+          {choiceA: 'img/shape/35b.png', choiceB: 'img/shape/64o.png', choiceC: 'img/shape/23g.png', choiceD: 'img/shape/16r.png', correct_response: []}, //no response is correct
+        ],
+        repetitions: 1,
+        randomize_order: true,
+        data: {task_part: 'day-1'}
+      }
+
+  var day1_NLP = {
+      timeline: [
+          {
+              type: jsPsychHtmlButtonResponse,
+              stimulus: function(){
+                return '<img src="img/char1_' + jsPsych.data.get().select('counterbalancing').values[0] + '.png"></img>'
+              },
+              choices: [
+                          jsPsych.timelineVariable('choiceA'),
+                          jsPsych.timelineVariable('choiceB'),
+                          jsPsych.timelineVariable('choiceC'),
+                          jsPsych.timelineVariable('choiceD')
+                        ],
+              button_html: '<img src="%choice%" />',
+              save_trial_parameters: {
+                choices: true
+              },
+              on_finish: function(data){
+                // Score the keyboard response as correct or incorrect.
+                data.correct_response = jsPsych.timelineVariable("correct_response");
+                data.correct = data.correct_response.includes(data.response);
+                //data.test1 = data.set;
+              }
+          },
+          {
+            type: jsPsychVideoButtonResponse,
+            stimulus: function(){
+              var last_trial_correct = jsPsych.data.get().last(1).values()[0].correct;
+              if(last_trial_correct){
+                return [
+                  'video/trial_correct_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+                ];
+              } else {
+                return [
+                  'video/trial_wrong_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+                ];
+              }
+            },
+            choices: function(){
+              return jsPsych.data.get().last(1).values()[0].choices
+              },
+            button_html: '<img src="%choice%" />',
+            response_allowed_while_playing: false,
+            trial_ends_after_video: true
+          }
+        ],
+      timeline_variables: [
+        {choiceA: 'img/shape/14g.png', choiceB: 'img/shape/33o.png', choiceC: 'img/shape/56r.png', choiceD: 'img/shape/75b.png', correct_response: [0,1,2,3]}, //all responses are correct
+        {choiceA: 'img/shape/43r.png', choiceB: 'img/shape/15g.png', choiceC: 'img/shape/66b.png', choiceD: 'img/shape/24o.png', correct_response: [0,1,2,3]}, //all responses are correct
+        {choiceA: 'img/shape/25r.png', choiceB: 'img/shape/73o.png', choiceC: 'img/shape/86g.png', choiceD: 'img/shape/44b.png', correct_response: [0,1,2,3]}, //all responses are correct
+        {choiceA: 'img/shape/43o.png', choiceB: 'img/shape/65r.png', choiceC: 'img/shape/54g.png', choiceD: 'img/shape/36b.png', correct_response: [0,1,2,3]}, //all responses are correct
+        {choiceA: 'img/shape/63g.png', choiceB: 'img/shape/76b.png', choiceC: 'img/shape/15o.png', choiceD: 'img/shape/34r.png', correct_response: [0,1,2,3]}, //all responses are correct
+        {choiceA: 'img/shape/34o.png', choiceB: 'img/shape/45g.png', choiceC: 'img/shape/26b.png', choiceD: 'img/shape/83r.png', correct_response: [0,1,2,3]}, //all responses are correct
+        {choiceA: 'img/shape/13b.png', choiceB: 'img/shape/74r.png', choiceC: 'img/shape/46o.png', choiceD: 'img/shape/85g.png', correct_response: []}, //no response is correct
+        {choiceA: 'img/shape/35b.png', choiceB: 'img/shape/64o.png', choiceC: 'img/shape/23g.png', choiceD: 'img/shape/16r.png', correct_response: []}, //no response is correct
+      ],
+      repetitions: 1,
+      randomize_order: true,
+      data: {task_part: 'day-1'}
+    }
+
+    var night1 = {
+      type: jsPsychVideoButtonResponse,
+      stimulus: [
+        function(){
+          return "video/night1_" + jsPsych.data.get().select('version').values[0] + ".mp4";
+        }
+      ],
+        choices: [],
+        response_allowed_while_playing: false,
+        trial_ends_after_video: true,
+        data: {task_part: 'night1'}
+    }
+
+    var day1 = {
+      timeline: [
+        {
+          conditional_function: function(){
+            return jsPsych.data.get().select('condition').values[0]=="LP"
+          },
+          timeline: [day1_LP]
+        },{
+          conditional_function: function(){
+            return jsPsych.data.get().select('condition').values[0]=="NLP"
+          },
+          timeline: [day1_NLP]
+        },
+        night1
+      ]
+    }
+
+    var day2_LP = {
+        timeline: [
+            {
+                type: jsPsychHtmlButtonResponse,
+                stimulus: function(){
+                  return '<img src="img/char1_' + jsPsych.data.get().select('counterbalancing').values[0] + '.png"></img>'
+                },
+                choices: [
+                            jsPsych.timelineVariable('choiceA'),
+                            jsPsych.timelineVariable('choiceB'),
+                            jsPsych.timelineVariable('choiceC'),
+                            jsPsych.timelineVariable('choiceD')
+                          ],
+                button_html: '<img src="%choice%" />',
+                save_trial_parameters: {
+                  choices: true
+                },
+                on_finish: function(data){
+                  // Score the keyboard response as correct or incorrect.
+                  data.correct_response = jsPsych.timelineVariable("correct_response");
+                  data.correct = data.correct_response.includes(data.response);
+                  //data.test1 = data.set;
+                }
+            },
+            {
+              type: jsPsychVideoButtonResponse,
+              stimulus: function(){
+                var last_trial_correct = jsPsych.data.get().last(1).values()[0].correct;
+                if(last_trial_correct){
+                  return [
+                    'video/trial_correct_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+                  ];
+                } else {
+                  return [
+                    'video/trial_wrong_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+                  ];
+                }
+              },
+              choices: function(){
+                return jsPsych.data.get().last(1).values()[0].choices
+                },
+              button_html: '<img src="%choice%" />',
+              response_allowed_while_playing: false,
+              trial_ends_after_video: true
+            }
+          ],
+        timeline_variables: [
+            {choiceA: 'img/shape/25b.png', choiceB: 'img/shape/14o.png', choiceC: 'img/shape/36g.png', choiceD: 'img/shape/53r.png', correct_response: [0,1,2,3]}, //all responses are correct
+            {choiceA: 'img/shape/55r.png', choiceB: 'img/shape/26g.png', choiceC: 'img/shape/43b.png', choiceD: 'img/shape/74o.png', correct_response: [0,1,2,3]}, //all responses are correct
+            {choiceA: 'img/shape/53g.png', choiceB: 'img/shape/46r.png', choiceC: 'img/shape/85o.png', choiceD: 'img/shape/74b.png', correct_response: [0,1,2,3]}, //all responses are correct
+            {choiceA: 'img/shape/44g.png', choiceB: 'img/shape/33r.png', choiceC: 'img/shape/65b.png', choiceD: 'img/shape/16o.png', correct_response: [0,1,2,3]}, //all responses are correct
+            {choiceA: 'img/shape/15r.png', choiceB: 'img/shape/34b.png', choiceC: 'img/shape/66g.png', choiceD: 'img/shape/23o.png', correct_response: []}, //no response is correct
+            {choiceA: 'img/shape/75g.png', choiceB: 'img/shape/63o.png', choiceC: 'img/shape/86r.png', choiceD: 'img/shape/54b.png', correct_response: []}, //no response is correct
+            {choiceA: 'img/shape/35g.png', choiceB: 'img/shape/16b.png', choiceC: 'img/shape/73r.png', choiceD: 'img/shape/54o.png', correct_response: []}, //no response is correct
+            {choiceA: 'img/shape/64r.png', choiceB: 'img/shape/13g.png', choiceC: 'img/shape/56b.png', choiceD: 'img/shape/45o.png', correct_response: []}, //no response is correct
+          ],
+        repetitions: 1,
+        randomize_order: true,
+        data: {task_part: 'day-2'}
+      }
+
+      var day2_NLP = {
+          timeline: [
+              {
+                  type: jsPsychHtmlButtonResponse,
+                  stimulus: function(){
+                    return '<img src="img/char1_' + jsPsych.data.get().select('counterbalancing').values[0] + '.png"></img>'
+                  },
+                  choices: [
+                              jsPsych.timelineVariable('choiceA'),
+                              jsPsych.timelineVariable('choiceB'),
+                              jsPsych.timelineVariable('choiceC'),
+                              jsPsych.timelineVariable('choiceD')
+                            ],
+                  button_html: '<img src="%choice%" />',
+                  save_trial_parameters: {
+                    choices: true
+                  },
+                  on_finish: function(data){
+                    // Score the keyboard response as correct or incorrect.
+                    data.correct_response = jsPsych.timelineVariable("correct_response");
+                    data.correct = data.correct_response.includes(data.response);
+                    //data.test1 = data.set;
+                  }
+              },
+              {
+                type: jsPsychVideoButtonResponse,
+                stimulus: function(){
+                  var last_trial_correct = jsPsych.data.get().last(1).values()[0].correct;
+                  if(last_trial_correct){
+                    return [
+                      'video/trial_correct_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+                    ];
+                  } else {
+                    return [
+                      'video/trial_wrong_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+                    ];
+                  }
+                },
+                choices: function(){
+                  return jsPsych.data.get().last(1).values()[0].choices
+                  },
+                button_html: '<img src="%choice%" />',
+                response_allowed_while_playing: false,
+                trial_ends_after_video: true
+              }
+            ],
+          timeline_variables: [
+              {choiceA: 'img/shape/25b.png', choiceB: 'img/shape/14o.png', choiceC: 'img/shape/36g.png', choiceD: 'img/shape/53r.png', correct_response: [0,1,2,3]}, //all responses are correct
+              {choiceA: 'img/shape/55r.png', choiceB: 'img/shape/26g.png', choiceC: 'img/shape/43b.png', choiceD: 'img/shape/74o.png', correct_response: [0,1,2,3]}, //all responses are correct
+              {choiceA: 'img/shape/53g.png', choiceB: 'img/shape/46r.png', choiceC: 'img/shape/85o.png', choiceD: 'img/shape/74b.png', correct_response: [0,1,2,3]}, //all responses are correct
+              {choiceA: 'img/shape/44g.png', choiceB: 'img/shape/33r.png', choiceC: 'img/shape/65b.png', choiceD: 'img/shape/16o.png', correct_response: [0,1,2,3]}, //all responses are correct
+              {choiceA: 'img/shape/15r.png', choiceB: 'img/shape/34b.png', choiceC: 'img/shape/66g.png', choiceD: 'img/shape/23o.png', correct_response: [0,1,2,3]}, //all responses are correct
+              {choiceA: 'img/shape/75g.png', choiceB: 'img/shape/63o.png', choiceC: 'img/shape/86r.png', choiceD: 'img/shape/54b.png', correct_response: [0,1,2,3]}, //all responses are correct
+              {choiceA: 'img/shape/35g.png', choiceB: 'img/shape/16b.png', choiceC: 'img/shape/73r.png', choiceD: 'img/shape/54o.png', correct_response: []}, //no response is correct
+              {choiceA: 'img/shape/64r.png', choiceB: 'img/shape/13g.png', choiceC: 'img/shape/56b.png', choiceD: 'img/shape/45o.png', correct_response: []}, //no response is correct
+            ],
+          repetitions: 1,
+          randomize_order: true,
+          data: {task_part: 'day-2'}
+        }
+
+    var night2 = {
+      type: jsPsychVideoButtonResponse,
+      stimulus: [
+        function(){
+          return "video/night2_" + jsPsych.data.get().select('version').values[0] + ".mp4";
+        }
+      ],
+        choices: [],
+        response_allowed_while_playing: false,
+        trial_ends_after_video: true,
+        data: {task_part: 'night2'}
+    }
+
+    var day2 = {
+      timeline: [
+        {
+          conditional_function: function(){
+            return jsPsych.data.get().select('condition').values[0]=="LP"
+          },
+          timeline: [day2_LP]
+        },{
+          conditional_function: function(){
+            return jsPsych.data.get().select('condition').values[0]=="NLP"
+          },
+          timeline: [day2_NLP]
+        },
+        night2
+      ]
+    }
+
+    var day3_prep = {
+        timeline: [
+            {
+                type: jsPsychHtmlButtonResponse,
+                stimulus: function(){
+                  return '<img src="img/char1_' + jsPsych.data.get().select('counterbalancing').values[0] + '.png"></img>'
+                },
+                choices: [
+                            jsPsych.timelineVariable('choiceA'),
+                            jsPsych.timelineVariable('choiceB'),
+                            jsPsych.timelineVariable('choiceC'),
+                            jsPsych.timelineVariable('choiceD')
+                          ],
+                button_html: '<img src="%choice%" />',
+                save_trial_parameters: {
+                  choices: true
+                },
+                on_finish: function(data){
+                  // Score the keyboard response as correct or incorrect.
+                  data.correct_response = jsPsych.timelineVariable("correct_response");
+                  data.correct = data.correct_response.includes(data.response);
+                  //data.test1 = data.set;
+                }
+            },
+            {
+              type: jsPsychVideoButtonResponse,
+              stimulus: function(){
+                var last_trial_correct = jsPsych.data.get().last(1).values()[0].correct;
+                if(last_trial_correct){
+                  return [
+                    'video/trial_correct_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+                  ];
+                } else {
+                  return [
+                    'video/trial_wrong_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+                  ];
+                }
+              },
+              choices: function(){
+                return jsPsych.data.get().last(1).values()[0].choices
+                },
+              button_html: '<img src="%choice%" />',
+              response_allowed_while_playing: false,
+              trial_ends_after_video: true
+            }
+          ],
+        timeline_variables: [
+            {choiceA: 'img/shape/33b.png', choiceB: 'img/shape/25g.png', choiceC: 'img/shape/14r.png', choiceD: 'img/shape/66o.png', correct_response: [0,1,2,3]}, //all responses are correct
+            {choiceA: 'img/shape/75o.png', choiceB: 'img/shape/23r.png', choiceC: 'img/shape/34g.png', choiceD: 'img/shape/86b.png', correct_response: [0,1,2,3]}, //all responses are correct
+            {choiceA: 'img/shape/85r.png', choiceB: 'img/shape/46b.png', choiceC: 'img/shape/53o.png', choiceD: 'img/shape/24g.png', correct_response: [0,1,2,3]}, //all responses are correct
+            {choiceA: 'img/shape/15b.png', choiceB: 'img/shape/83g.png', choiceC: 'img/shape/44r.png', choiceD: 'img/shape/26o.png', correct_response: [0,1,2,3]}, //all responses are correct
+            {choiceA: 'img/shape/55b.png', choiceB: 'img/shape/74g.png', choiceC: 'img/shape/63r.png', choiceD: 'img/shape/36o.png', correct_response: [0,1,2,3]}, //all responses are correct
+            {choiceA: 'img/shape/35r.png', choiceB: 'img/shape/43g.png', choiceC: 'img/shape/76o.png', choiceD: 'img/shape/64b.png', correct_response: [0,1,2,3]}, //all responses are correct
+            {choiceA: 'img/shape/45r.png', choiceB: 'img/shape/13o.png', choiceC: 'img/shape/24b.png', choiceD: 'img/shape/56g.png', correct_response: []}, //no response is correct
+            {choiceA: 'img/shape/16g.png', choiceB: 'img/shape/54r.png', choiceC: 'img/shape/73b.png', choiceD: 'img/shape/35o.png', correct_response: []}, //no response is correct
+          ],
+        repetitions: 1,
+        randomize_order: true,
+        data: {task_part: 'day-3'}
+      }
+
+    var night3 = {
+      type: jsPsychVideoButtonResponse,
+      stimulus: [
+        function(){
+          return "video/night3_" + jsPsych.data.get().select('version').values[0] + ".mp4";
+        }
+      ],
+        choices: [],
+        response_allowed_while_playing: false,
+        trial_ends_after_video: true,
+        data: {task_part: 'night3'}
+    }
+
+    var day3 = {
+      timeline: [
+        day3_prep,
+        night3
+      ]
+    }
+
+    var shape_game = {
+      timeline: [
+      //  shape_demo,
+        day1,
+        day2,
+        day3
+      ]
+    }
+    var preload_1 = {
+        type: jsPsychPreload,
+        trials: shape_game // automatically preload just the images from shape_game trials
+    }
+  timeline.push(preload_1);
+  timeline.push(shape_game);
+
+  /* start the experiment */
+  jatos.onLoad(() => {
+    jatos.addAbortButton();
+    jsPsych.run(timeline);
+    });
+  </script>
+  </html>

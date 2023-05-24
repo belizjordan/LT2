@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My experiment</title>
+    <script src="jatos.js"></script>
+    <script src="jspsych-7.0/dist/jspsych.js"></script>
+    <script src="jspsych-7.0/dist/plugin-preload.js"></script>
+    <script src="jspsych-7.0/dist/plugin-fullscreen.js"></script>
+    <script src="jspsych-7.0/dist/plugin-survey.js"></script>
+    <script src="jspsych-7.0/dist/plugin-survey-text.js"></script>
+    <script src="jspsych-7.0/dist/plugin-html-button-response.js"></script>
+    <script src="jspsych-7.0/dist/plugin-html-keyboard-response.js"></script>
+    <script src="jspsych-7.0/dist/plugin-video-button-response.js"></script>
+    <script src="jspsych-7.0/dist/plugin-survey-multi-choice.js"></script>
+    <script src="jspsych-7.0/dist/plugin-html-button-response2.js"></script>
+    <link href="jspsych-7.0/dist/jspsych.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    <div id="jspsych-target"></div>
+  </body>
+  <script>
+
+  /* initialize jsPsych */
+  var jsPsych = initJsPsych({
+    on_finish: () => jatos.endStudy(jsPsych.data.get().json())
+  });
+
+
+  /* create the experiment timeline */
+  var timeline = [];
+
+
+  var preload = {
+      type: jsPsychPreload,
+      auto_preload: true,
+    };
+
+  timeline.push(preload);
+
+  //end message//
+    var ending = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: "<p>Thank you for participating in this game!</p>",
+    choices: ['Finish'],
+    on_start: function(data){
+     var id = jsPsych.data.get().filter({task_part: 'id-question'}).values()[0].response['participant_ID'];
+     var file_name = 'LT_' + id + '.csv';
+     jsPsych.data.get().localSave('csv',file_name); // Saves a file on the computer running the experiment. First localSave argument is the format, second is the filename.
+   }
+  };
+
+  timeline.push(ending);
+
+    /* start the experiment */
+    jatos.onLoad(() => {
+      jatos.addAbortButton();
+      jsPsych.run(timeline);
+      });
+  </script>
+</html>

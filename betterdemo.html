@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My experiment</title>
+    <script src="jatos.js"></script>
+    <script src="jspsych-7.0/dist/jspsych.js"></script>
+    <script src="jspsych-7.0/dist/plugin-preload.js"></script>
+    <script src="jspsych-7.0/dist/plugin-fullscreen.js"></script>
+    <script src="jspsych-7.0/dist/plugin-survey.js"></script>
+    <script src="jspsych-7.0/dist/plugin-survey-text.js"></script>
+    <script src="jspsych-7.0/dist/plugin-html-button-response.js"></script>
+    <script src="jspsych-7.0/dist/plugin-html-keyboard-response.js"></script>
+    <script src="jspsych-7.0/dist/plugin-video-button-response.js"></script>
+    <script src="jspsych-7.0/dist/plugin-survey-multi-choice.js"></script>
+    <script src="jspsych-7.0/dist/plugin-html-button-response2.js"></script>
+    <link href="jspsych-7.0/dist/jspsych.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    <div id="jspsych-target"></div>
+  </body>
+  <script>
+
+  /* initialize jsPsych */
+  var jsPsych = initJsPsych({
+    on_finish: () => jatos.endStudy(jsPsych.data.get().json())
+  });
+
+
+  /* create the experiment timeline */
+  var timeline = [];
+
+  var participant_info = {
+    type: jsPsychSurveyText,
+    questions: [
+      {prompt: "Participant name", name: "participant_name"},
+      {prompt: "Participant ID", name: "participant_ID"}
+    ],
+    data: {task_part: 'id-question'}
+  }
+
+    timeline.push(participant_info);
+
+  var version = {
+    type: jsPsychSurvey,
+    pages: [
+      [
+        {
+          type: 'multi-choice',
+          prompt: "Condition",
+          name: 'condition',
+          options: ['LP','NLP'],
+          required: true
+        },
+        {
+          type: 'multi-choice',
+          prompt: "Counterbalancing",
+          name: 'counterbalancing',
+          options: ['1','2'],
+          required: true
+        },
+        {
+          type: 'drop-down',
+          prompt: 'Order',
+          name: 'order',
+          options: [1,2,3],
+          required: true
+        }
+      ]
+    ],
+    data: {task_part: 'version'},
+    on_finish: function(data){
+      var condition = jsPsych.data.get().filter({task_part: 'version'}).values()[0].response['condition'];
+      var counterbalancing = "C" + jsPsych.data.get().filter({task_part: 'version'}).values()[0].response['counterbalancing'];
+      var order = "o" + jsPsych.data.get().filter({task_part: 'version'}).values()[0].response['order'];
+      var version = condition +  "_" + counterbalancing;
+      jsPsych.data.addProperties({condition: condition, counterbalancing: counterbalancing, order: order, version: version});
+    }
+  }
+
+    timeline.push(version);
+
+  var fullscreen = {
+    type: jsPsychFullscreen,
+    fullscreen_mode: true,
+    message: function(){
+      var counterbalancing = jsPsych.data.get().select('counterbalancing').values[0];
+      if(counterbalancing=="C1"){
+        return ["</p>Let's play the shape game with Monster!</p>"]
+      } else if(counterbalancing=="C2"){
+        return ["</p>Let's play the shape game with Robot!</p>"]
+      }
+    },
+    data: {task_part: 'fullscreen'}
+  };
+
+    timeline.push(fullscreen);
+
+
+
+  var options = {
+    timeline: [
+      {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: '<p>Now, we’re going to choose a new game to play.</p>' +
+        '<p>We’re going to look at different games, and for each set of games</p>' +
+        '<p>you’ll choose the one you want to play the most.</p>' +
+        '<p>Here are the options:</p>',
+        choices: ['Continue']
+      },
+      {
+        type: jsPsychVideoButtonResponse,
+        stimulus: [
+          function(){
+            return 'video/opt/optA_' + jsPsych.data.get().select('order').values[0] + '_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+          }
+        ],
+        choices: [],
+        response_allowed_while_playing: false,
+        trial_ends_after_video: true
+      },
+      {
+        type: jsPsychHtmlButtonResponse2,
+        stimulus: '',
+        choices: function(){
+            var optionset = 'optA_' + jsPsych.data.get().select('order').values[0] + '_' + jsPsych.data.get().select('counterbalancing').values[0];
+            if(optionset=='optA_o1_C1'){
+              return ['img/opt/optA1.png','img/opt/optA2.png','img/opt/optA4.png'];
+            } else if(optionset=='optA_o2_C1'){
+              return ['img/opt/optA2.png','img/opt/optA4.png','img/opt/optA1.png'];
+            } else if(optionset=='optA_o3_C1'){
+              return ['img/opt/optA4.png','img/opt/optA1.png','img/opt/optA2.png'];
+            } else if(optionset=='optA_o1_C2'){
+              return ['img/opt/optA1.png','img/opt/optA3.png','img/opt/optA4.png'];
+            } else if(optionset=='optA_o2_C2'){
+              return ['img/opt/optA3.png','img/opt/optA4.png','img/opt/optA1.png'];
+            } else if(optionset=='optA_o3_C2'){
+              return ['img/opt/optA4.png','img/opt/optA1.png','img/opt/optA3.png'];
+            }
+          },
+        button_html: '<img src="%choice%" />',
+      },
+      {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: '<p>Alright, here are the next three options:</p>',
+        choices: ['Continue']
+      },
+      {
+        type: jsPsychVideoButtonResponse,
+        stimulus: [
+          function(){
+            return 'video/opt/optB_' + jsPsych.data.get().select('order').values[0] + '_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+          }
+        ],
+        choices: [],
+        response_allowed_while_playing: false,
+        trial_ends_after_video: true
+      },
+      {
+        type: jsPsychHtmlButtonResponse2,
+        stimulus: '',
+        choices: function(){
+            var optionset = 'optB_' + jsPsych.data.get().select('order').values[0] + '_' + jsPsych.data.get().select('counterbalancing').values[0];
+            if(optionset=='optB_o1_C1'){
+              return ['img/opt/optB2.png','img/opt/optB4.png','img/opt/optB1.png'];
+            } else if(optionset=='optB_o2_C1'){
+              return ['img/opt/optB4.png','img/opt/optB1.png','img/opt/optB2.png'];
+            } else if(optionset=='optB_o3_C1'){
+              return ['img/opt/optB1.png','img/opt/optB2.png','img/opt/optB4.png'];
+            } else if(optionset=='optB_o1_C2'){
+              return ['img/opt/optB3.png','img/opt/optB4.png','img/opt/optB1.png'];
+            } else if(optionset=='optB_o2_C2'){
+              return ['img/opt/optB4.png','img/opt/optB1.png','img/opt/optB3.png'];
+            } else if(optionset=='optB_o3_C2'){
+              return ['img/opt/optB1.png','img/opt/optB3.png','img/opt/optB4.png'];
+            }
+          },
+        button_html: '<img src="%choice%" />',
+      },
+      {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: '<p>Alright, here are the last three options:</p>',
+        choices: ['Continue']
+      },
+      {
+        type: jsPsychVideoButtonResponse,
+        stimulus: [
+          function(){
+            return 'video/opt/optC_' + jsPsych.data.get().select('order').values[0] + '_' + jsPsych.data.get().select('counterbalancing').values[0] + '.mp4'
+          }
+        ],
+        choices: [],
+        response_allowed_while_playing: false,
+        trial_ends_after_video: true
+      },
+      {
+        type: jsPsychHtmlButtonResponse2,
+        stimulus: '',
+        choices: function(){
+            var optionset = 'optC_' + jsPsych.data.get().select('order').values[0] + '_' + jsPsych.data.get().select('counterbalancing').values[0];
+            if(optionset=='optC_o1_C1'){
+              return ['img/opt/optC4.png','img/opt/optC2.png','img/opt/optC3.png'];
+            } else if(optionset=='optC_o2_C1'){
+              return ['img/opt/optC2.png','img/opt/optC3.png','img/opt/optC4.png'];
+            } else if(optionset=='optC_o3_C1'){
+              return ['img/opt/optC3.png','img/opt/optC4.png','img/opt/optC2.png'];
+            } else if(optionset=='optC_o1_C2'){
+              return ['img/opt/optC4.png','img/opt/optC1.png','img/opt/optC3.png'];
+            } else if(optionset=='optC_o2_C2'){
+              return ['img/opt/optC1.png','img/opt/optC3.png','img/opt/optC4.png'];
+            } else if(optionset=='optC_o3_C2'){
+              return ['img/opt/optC3.png','img/opt/optC4.png','img/opt/optC1.png'];
+            }
+          },
+        button_html: '<img src="%choice%" />',
+        on_finish: function(data){
+          var choice = jsPsych.data.get().last(1).values()[0].response;
+          var followupchoice1 = jsPsych.data.get().last(1).values()[0].choices[choice];
+          var followupchoice2 = followupchoice1.replace('img/opt/opt','');
+          var followup = followupchoice2.replace('.png','');
+          jsPsych.data.addProperties({followup: followup});
+        }
+      },
+    ],
+    save_trial_parameters: {
+      choices: true
+    },
+    data: {task_part: 'options'}
+  }
+
+    timeline.push(options);
+
+
+
+  //end message//
+    var ending = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: "<p>Thank you for participating in this game!</p>",
+    choices: ['Finish'],
+    on_start: function(data){
+     var id = jsPsych.data.get().filter({task_part: 'id-question'}).values()[0].response['participant_ID'];
+     var file_name = 'LT_' + id + '.csv';
+     jsPsych.data.get().localSave('csv',file_name); // Saves a file on the computer running the experiment. First localSave argument is the format, second is the filename.
+   }
+  };
+
+    timeline.push(ending);
+
+    /* start the experiment */
+    jatos.onLoad(() => {
+      jatos.addAbortButton();
+      jsPsych.run(timeline);
+      });
+  </script>
+</html>
